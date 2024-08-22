@@ -1,1 +1,36 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Collapsible Tree</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .node circle {
+            fill: #999;
+            stroke: steelblue;
+            stroke-width: 3px;
+        }
+        .node text {
+            font-size: 12px;
+        }
+        .link {
+            fill: none;
+            stroke: #555;
+            stroke-opacity: 0.4;
+            stroke-width: 1.5px;
+        }
+    </style>
+</head>
+<body>
+
+<div id="tree"></div>
+
+<script src="https://d3js.org/d3.v7.min.js"></script>
+<script src="D3.js"></script>
+
+</body>
+</html>
