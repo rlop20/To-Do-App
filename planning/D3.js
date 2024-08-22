@@ -1,7 +1,6 @@
 const data = {
     name: "Project Name",
-    children: 
-    [
+    children: [
       {
         name: "Task 1",
         children: [
@@ -15,7 +14,7 @@ const data = {
           { name: "SubTask 1" },
           { name: "SubTask 2" }
         ]
-      },
+      }
     ]
   };
   
@@ -29,10 +28,10 @@ const data = {
   let i = 0;  // Define 'i' to be used for unique IDs
   
   const svg = d3.select("#tree").append("svg")
-      .attr("width", width)
-      .attr("height", height)
+    .attr("width", width)
+    .attr("height", height)
     .append("g")
-      .attr("transform", `translate(${margin.left},${margin.top})`);
+    .attr("transform", `translate(${margin.left},${margin.top})`);
   
   const root = d3.hierarchy(data);
   root.x0 = treeHeight / 2;
@@ -52,60 +51,80 @@ const data = {
     nodes.forEach(d => d.y = d.depth * 180);
   
     const node = svg.selectAll('g.node')
-        .data(nodes, d => d.id || (d.id = ++i));  // Use 'i' to assign a unique ID
+      .data(nodes, d => d.id || (d.id = ++i));  // Use 'i' to assign a unique ID
   
     const nodeEnter = node.enter().append('g')
-        .attr('class', 'node')
-        .attr("transform", d => `translate(${source.y0},${source.x0})`)
-        .on('click', (event, d) => {
-            toggle(d);
-            update(d);
-        });
+      .attr('class', 'node')
+      .attr("transform", d => `translate(${source.y0},${source.x0})`);
   
+    // Create a button (circle) to handle the expand/collapse
     nodeEnter.append('circle')
-        .attr('class', 'node')
-        .attr('r', 10)
-        .attr('fill', d => d._children ? "lightsteelblue" : "#fff")
-        .attr('stroke', d => d._children ? "steelblue" : "lightsteelblue");
+      .attr('class', 'node')
+      .attr('r', 10)
+      .attr('fill', d => d._children ? "lightsteelblue" : "#fff")
+      .attr('stroke', d => d._children ? "steelblue" : "lightsteelblue")
+      .on('click', (event, d) => {
+        toggle(d);
+        update(d);
+      });
   
-    nodeEnter.append('text')
-        .attr('dy', '.35em')
-        .attr('x', d => d.children || d._children ? -13 : 13)
-        .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
-        .text(d => d.data.name);
+    const nodeText = nodeEnter.append('text')
+      .attr('dy', '.35em')
+      .attr('x', d => d.children || d._children ? -13 : 13)
+      .attr('text-anchor', d => d.children || d._children ? 'end' : 'start')
+      .text(d => d.data.name)
+      .attr("cursor", "pointer")
+      .on("click", (event, d) => {
+        event.stopPropagation();  // Prevent triggering the click event on the node
+        editText(d, event.target);
+      });
+  
+    // Add the plus sign below the root node
+    if (source.depth === 0) {
+      nodeEnter.append("text")
+        .attr("y", 30)  // Position it below the root node
+        .attr("text-anchor", "middle")
+        .attr("font-size", "24px")
+        .attr("cursor", "pointer")
+        .text("+")
+        .on("click", (event) => {
+          event.stopPropagation();
+          addChildNode(root);
+        });
+    }
   
     const nodeUpdate = nodeEnter.merge(node);
   
     nodeUpdate.transition()
-        .duration(750)
-        .attr('transform', d => `translate(${d.y},${d.x})`);
+      .duration(750)
+      .attr('transform', d => `translate(${d.y},${d.x})`);
   
     const nodeExit = node.exit().transition()
-        .duration(750)
-        .attr('transform', d => `translate(${source.y},${source.x})`)
-        .remove();
+      .duration(750)
+      .attr('transform', d => `translate(${source.y},${source.x})`)
+      .remove();
   
     const link = svg.selectAll('path.link')
-        .data(links, d => d.target.id);
+      .data(links, d => d.target.id);
   
     const linkEnter = link.enter().insert('path', "g")
-        .attr("class", "link")
-        .attr('d', d => {
-            const o = {x: source.x0, y: source.y0};
-            return diagonal(o, o);
-        });
+      .attr("class", "link")
+      .attr('d', d => {
+        const o = { x: source.x0, y: source.y0 };
+        return diagonal(o, o);
+      });
   
     link.merge(linkEnter).transition()
-        .duration(750)
-        .attr('d', d => diagonal(d.source, d.target));
+      .duration(750)
+      .attr('d', d => diagonal(d.source, d.target));
   
     link.exit().transition()
-        .duration(750)
-        .attr('d', d => {
-            const o = {x: source.x, y: source.y};
-            return diagonal(o, o);
-        })
-        .remove();
+      .duration(750)
+      .attr('d', d => {
+        const o = { x: source.x, y: source.y };
+        return diagonal(o, o);
+      })
+      .remove();
   
     nodes.forEach(d => {
       d.x0 = d.x;
@@ -121,7 +140,7 @@ const data = {
   }
   
   function collapse(d) {
-    if(d.children) {
+    if (d.children) {
       d._children = d.children;
       d._children.forEach(collapse);
       d.children = null;
@@ -129,12 +148,55 @@ const data = {
   }
   
   function toggle(d) {
-    if(d.children) {
+    if (d.children) {
       d._children = d.children;
       d.children = null;
     } else {
       d.children = d._children;
       d._children = null;
     }
+  }
+  
+  function editText(d, textElement) {
+    const bbox = textElement.getBBox();
+    const parent = d3.select(textElement.parentNode);
+  
+    const input = parent.append("foreignObject")
+      .attr("x", bbox.x - 3)
+      .attr("y", bbox.y - 3)
+      .attr("width", bbox.width + 6)
+      .attr("height", bbox.height + 6)
+      .append("xhtml:input")
+      .attr("style", `width: ${bbox.width + 6}px;`)
+      .attr("value", d.data.name)
+      .on("blur", function () {
+        const newValue = this.value;
+        d.data.name = newValue;
+        parent.select("text").text(newValue);
+        parent.select("foreignObject").remove();
+      })
+      .on("keydown", function (event) {
+        if (event.key === "Enter") {
+          this.blur();
+        }
+      });
+  
+    input.node().focus();
+  }
+  
+  function addChildNode(parentNode) {
+    if (!parentNode.data.children) {
+      parentNode.data.children = [];
+    }
+    
+    // Determine the number for the new task sequentially based on current children
+    const newTaskNumber = parentNode.data.children.length + 1 + 2; // Adding 2 since 2 tasks are already present
+    
+    const newNode = {
+      name: `Task ${newTaskNumber}`,
+    };
+    
+    parentNode.data.children.push(newNode);
+    update(root);  // Update the tree starting from the root node
   }
   
